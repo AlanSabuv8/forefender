@@ -1,0 +1,23 @@
+
+.welcome {
+    font-size: 30px;
+    font-weight: 700;
+    margin-bottom: 50px;
+}
+
+.home-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+}
+  
+.options-container {
+    display: flex;
+    gap: 20px;
+}
+  
+  
+  
+
+  

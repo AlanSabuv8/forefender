@@ -75,20 +75,13 @@
     cursor: pointer;
 }
 
-.submit-container{
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    gap: 10px;
-    margin: 20px auto;
-}
-
 .submit{
     display: flex;
     justify-content: center;
     align-items: center;
-    width: 140px;
+    width: 150px;
     height: 40px;
+    margin: 20px auto;
     color: #fff;
     background: #020024;
     border-radius: 50px;

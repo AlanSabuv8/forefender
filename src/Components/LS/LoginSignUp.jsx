@@ -1,14 +1,22 @@
-import React, { useState } from 'react'
-import './LoginSignUp.css'
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import './LoginSignUp.css';
 
-import user_icon from "../Assets/person.png"
-import email_icon from "../Assets/email.png"
-import password_icon from "../Assets/password.png"
-import phone_icon from "../Assets/phone.png"
+import user_icon from "../Assets/person.png";
+import email_icon from "../Assets/email.png";
+import password_icon from "../Assets/password.png";
+import phone_icon from "../Assets/phone.png";
 
 const LoginSignUp = () => {
+  const navigateTo = useNavigate();
+  const [action,setAction] = useState("Login");
 
-  const [action,setAction] = useState("Sign Up");
+  const handleLoginSignup = () => {
+    // Your login/signup logic
+
+    // After successful login/signup, navigate to the file-upload page
+    navigateTo('/home');
+  };
 
   return (
     <div className="container">
@@ -39,11 +47,9 @@ const LoginSignUp = () => {
           <input type="password" placeholder="Cfm Password"/>
         </div>}
       </div>
-      {action==="Sign Up"?<div></div>:<div className="forgot-password">Lost Password? <span>Click Here!</span></div>}
-      <div className="submit-container">
-        <div className={action==="Login"?"submit gray":"submit"} onClick={()=>{setAction("Sign Up")}}>Sign Up</div>
-        <div className={action==="Sign Up"?"submit gray":"submit"} onClick={()=>{setAction("Login")}}>Login</div>
-      </div>
+      {action==="Sign Up"?<div></div>:<div className="forgot-password">Lost Password? <span>Click Here!</span></div>}    
+      {action==="Login"?<div className="submit" onClick={()=>{handleLoginSignup()}}>Login</div>:<div className="submit" onClick={()=>{handleLoginSignup()}}>Sign Up</div>} 
+      {action==="Sign Up"?<div className="forgot-password">Already have an account? <span onClick={()=>{setAction("Login")}}>Login Here!</span></div>:<div className="forgot-password">New User? <span onClick={()=>{setAction("Sign Up")}}>Sign Up Here!</span></div>}
       
     </div>
   )
