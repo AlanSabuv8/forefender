@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './LoginSignUp.css';
+import './LoginSignup.css';
 
 import user_icon from "../Assets/person.png";
 import email_icon from "../Assets/email.png";
@@ -17,6 +17,7 @@ const LoginSignUp = () => {
     // After successful login/signup, navigate to the file-upload page
     navigateTo('/home');
   };
+  
 
   return (
     <div className="container">
