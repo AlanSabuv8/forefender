@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { enc, fromHex, uint8ArrayToText } from './chacha20.jsx';
+import { enc, fromHex } from './chacha20.jsx';
 import './FileRetrieve.css';
 
 function FileRetrieve() {
@@ -17,7 +17,7 @@ function FileRetrieve() {
 
   const handleEncrypt = () => {
     const plaintext = inputValue;
-    const encryptedText = uint8ArrayToText(enc(plaintext, key, nonce));
+    const encryptedText = enc(plaintext, key, nonce);
     
     setEncryptedData(encryptedText);
     
@@ -25,7 +25,7 @@ function FileRetrieve() {
   };
 
   const handleDecrypt = () => {
-    const decryptedText = uint8ArrayToText(enc(encryptedData, key, nonce));
+    const decryptedText = enc(encryptedData, key, nonce);
     setDecryptedData(decryptedText);
   };
 
