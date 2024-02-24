@@ -2,28 +2,39 @@ import React, { useState } from 'react';
 import { MdCloudUpload, MdDelete } from 'react-icons/md';
 import { AiFillFileImage } from 'react-icons/ai';
 import './FileUpload.css';
+import axios from 'axios'
 
 const FileUpload = ({ onFileSelect }) => {
 
   const [image, setImage] = useState(null);
   const [fileName, setFileName] = useState("No file selected");
+  const [file, setFile] = useState()
 
   const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if(file){
-      setFileName(file.name);
+    const pfile = e.target.files[0]
+    setFile(pfile)
+    if(pfile){
+      setFileName(pfile.name);
 
-      if (file.type.startsWith('image/')) {
+      if (pfile.type.startsWith('image/')) {
         const reader = new FileReader();
         reader.onload = () => {
           setImage(reader.result);
         };
-        reader.readAsDataURL(file);
+        reader.readAsDataURL(pfile);
       } else {
         setImage(AiFillFileImage);
       }
     }
   };
+
+  const upload = () => {
+    const formData = new FormData()
+    formData.append('file', file)
+    axios.post('http://localhost:5000/upload', formData)
+    .then(res => {})
+    .catch(er => console.log(er))
+  }
 
   
 
@@ -59,6 +70,7 @@ const FileUpload = ({ onFileSelect }) => {
           />
         </span>
       </section>
+      <button type="button" onClick={upload}>Encrypt</button>
 
     </main>
   );
