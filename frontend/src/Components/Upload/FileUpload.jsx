@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { MdCloudUpload, MdDelete } from 'react-icons/md';
 import { AiFillFileImage } from 'react-icons/ai';
 import './FileUpload.css';
-import axios from 'axios'
+import axios from 'axios';
 
 const FileUpload = ({ onFileSelect }) => {
 
+  const navigateTo = useNavigate();
   const [image, setImage] = useState(null);
   const [fileName, setFileName] = useState("No file selected");
   const [file, setFile] = useState()
+  const [loading, setLoading] = useState(false);
 
   const handleFileChange = (e) => {
     const pfile = e.target.files[0]
@@ -28,12 +31,20 @@ const FileUpload = ({ onFileSelect }) => {
     }
   };
 
-  const upload = () => {
+  const upload = async () => {
+    setLoading(true)
     const formData = new FormData()
     formData.append('file', file)
-    axios.post('http://localhost:5000/upload', formData)
-    .then(res => {})
-    .catch(er => console.log(er))
+    try{
+      const response = await axios.post('http://localhost:5000/upload', formData)
+      setLoading(false)
+      console.log(response.data)
+      navigateTo('/home');
+    }
+    catch(error) {
+      setLoading(false)
+      console.log(error)
+    }
   }
 
   
@@ -71,6 +82,7 @@ const FileUpload = ({ onFileSelect }) => {
         </span>
       </section>
       <button type="button" onClick={upload}>Encrypt</button>
+      {loading && <div className="loading">Encrypting...</div>}
 
     </main>
   );

@@ -6,7 +6,7 @@ import Axios from 'axios';
 import user_icon from "../Assets/person.png";
 import email_icon from "../Assets/email.png";
 import password_icon from "../Assets/password.png";
-import phone_icon from "../Assets/phone.png";
+//import phone_icon from "../Assets/phone.png";
 
 const LoginSignUp = () => {
   const navigateTo = useNavigate();

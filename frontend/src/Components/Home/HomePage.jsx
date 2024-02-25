@@ -1,6 +1,4 @@
 // HomePage.jsx
-import FileUpload from '../Upload/FileUpload';
-import FileRetrieval from '../Retrieve/FileRetrieve';
 import './HomePage.css';
 import { useNavigate } from 'react-router-dom';
 

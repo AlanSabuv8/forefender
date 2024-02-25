@@ -4,7 +4,6 @@ const express = require("express")
 const fs = require("fs");
 const cors = require("cors")
 const multer = require('multer')
-const bodyParser = require('body-parser');
 const AWS = require('aws-sdk');
 require('dotenv').config();
 //import { Auth } from 'aws-amplify';
@@ -23,7 +22,7 @@ app.use(express.json())
 const cognito = new AWS.CognitoIdentityServiceProvider({
     apiVersion: '2016-04-18',
     region: 'us-east-1'
-  });
+});
 
 app.post('/signup', async (req, res) => {
 const { name, email, password } = req.body;
@@ -97,16 +96,18 @@ app.post('/upload', upload.single('file'), (req, res) => {
     console.log(req.body)
     console.log(req.file)
 
-    fs.readFile(req.file.path, (err, data) => {
+    fs.readFile(req.file.path, "utf-8", (err, data) => {
         if (err) {
             console.error(err);
             return res.status(500).send("Error reading uploaded file");
         }
 
-        // Convert data to Uint8Array
-        const uint8ArrayData = new Uint8Array(data);
+        console.log(data)
 
-        const text = enc(uint8ArrayData, key, nonce)
+
+        const newData = enc(data, key, nonce)
+
+        console.log(newData)
 
         // Alternatively, convert data to hexadecimal
         //const hexadecimalData = data.toString("hex");
@@ -115,12 +116,14 @@ app.post('/upload', upload.single('file'), (req, res) => {
         //res.send({ uint8ArrayData, hexadecimalData });
 
         // Delete the temporary file after processing
-        fs.writeFile(req.file.path, text, (err) => {
+        fs.writeFile(req.file.path, newData, (err) => {
             if (err) {
                 console.error(`Error writing file: ${err}`);
                 return;
             }
-            console.log('File encrypted and replaced successfully.');
+            res.json({ success: true, message: 'File encrypted and replaced successfully' });
+            //return;
+            //console.log('File encrypted and replaced successfully.');
         });
     });
 })

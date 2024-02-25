@@ -132,13 +132,14 @@ function hexToText(hexString) {
 }
 
 function enc(p, k, n){
+  const pln = fromHex(textToHex(p))
   //console.log(textToHex(p));
   //console.log(pln);
-  const l = p.length;
-  const ch = new Chacha20(k, n, 0);
+  const l = pln.length;
+  const ch = new Chacha20(k, n, 1);
   const ds = new Uint8Array(l);
-  ch.encrypt(ds, p, l);
-  return hexToText(uint8ArrayToHex(ds));
+  ch.encrypt(ds, pln, l);
+  return (hexToText(uint8ArrayToHex(ds)));
 }
 
 module.exports = {
