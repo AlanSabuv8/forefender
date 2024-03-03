@@ -72,7 +72,7 @@ const LoginSignUp = () => {
           <input type="password" placeholder="Cfm Password"/>
         </div>}
       </div>
-      {action==="Sign Up"?<div></div>:<div className="forgot-password">Lost Password? <span>Click Here!</span></div>}    
+      {action==="Sign Up"?<div></div>:<div className="forgot-password">Lost Password? <span onClick={navigateTo('/home')}>Click Here!</span></div>}    
       {action === "Login" ? <div className="submit" onClick={handleLoginSignup}>Login</div> : <div className="submit" onClick={handleLoginSignup}>Sign Up</div>}
       {action === "Sign Up" ? <div className="forgot-password">Already have an account? <span onClick={() => { setAction("Login") }}>Login Here!</span></div> : <div className="forgot-password">New User? <span onClick={() => { setAction("Sign Up") }}>Sign Up Here!</span></div>}
     </div>

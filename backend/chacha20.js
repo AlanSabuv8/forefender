@@ -131,7 +131,10 @@ function hexToText(hexString) {
   return text;
 }
 
-function enc(p, k, n){
+
+
+function enc(p, k, n, type){
+  if (type == 'application/pdf'){}
   const pln = fromHex(textToHex(p))
   //console.log(textToHex(p));
   //console.log(pln);
@@ -142,7 +145,20 @@ function enc(p, k, n){
   return (hexToText(uint8ArrayToHex(ds)));
 }
 
+  // Function to encrypt or decrypt a Uint8Array
+  function chacha20Crypt(uint8Array, key, nonce, encrypt = true) {
+    const chacha20 = new Chacha20(key, nonce, 1);
+    const result = new Uint8Array(uint8Array.length);
+    if (encrypt) {
+        chacha20.encrypt(result, uint8Array, uint8Array.length);
+    } else {
+        chacha20.encrypt(result, uint8Array, uint8Array.length);
+    }
+    return result;
+}
+
 module.exports = {
   enc,
-  fromHex
+  fromHex,
+  chacha20Crypt
 };
