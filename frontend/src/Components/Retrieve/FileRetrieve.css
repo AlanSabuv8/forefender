@@ -1,0 +1,53 @@
+/* Styles for the container div */
+.container {
+  margin: 0 auto;
+  max-width: 800px;
+  padding: 20px;
+}
+
+/* Styles for the loading indicator */
+.loading {
+  text-align: center;
+  font-size: 18px;
+  color: #333;
+}
+
+/* Styles for the error message */
+.error {
+  text-align: center;
+  font-size: 18px;
+  color: red;
+}
+
+/* Styles for the table */
+.episodes-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+/* Styles for table headers */
+.episodes-table thead th {
+  padding: 10px;
+  border: 1px solid #ddd;
+}
+
+/* Styles for table data */
+.episodes-table tbody td {
+  padding: 10px;
+  border: 1px solid #ddd;
+}
+
+
+/* Styles for download button */
+.episodes-table button {
+  padding: 5px 10px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+}
+
+.episodes-table button:hover {
+  background-color: #0056b3;
+}

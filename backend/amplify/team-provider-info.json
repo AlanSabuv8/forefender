@@ -1,0 +1,20 @@
+{
+  "dev": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-forefender-dev-20309-authRole",
+      "UnauthRoleArn": "arn:aws:iam::154797931074:role/amplify-forefender-dev-20309-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::154797931074:role/amplify-forefender-dev-20309-authRole",
+      "Region": "us-east-1",
+      "DeploymentBucketName": "amplify-forefender-dev-20309-deployment",
+      "UnauthRoleName": "amplify-forefender-dev-20309-unauthRole",
+      "StackName": "amplify-forefender-dev-20309",
+      "StackId": "arn:aws:cloudformation:us-east-1:154797931074:stack/amplify-forefender-dev-20309/eea96810-d353-11ee-bc53-0e7d4591d4ff",
+      "AmplifyAppId": "d3us9nsq09ys8l"
+    },
+    "categories": {
+      "auth": {
+        "forefender26805b70": {}
+      }
+    }
+  }
+}
