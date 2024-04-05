@@ -8,6 +8,8 @@ import ChangePassword from './Components/Otp/ChangePassword.jsx';
 import ForgotPassword from './Components/Forgetps/ForgotPassword.jsx';
 import FileUpload from './Components/Upload/FileUpload.jsx';
 import FileRetrieve from './Components/Retrieve/FileRetrieve.jsx';
+import CopyKeyToClipboard from './Components/key/key.jsx';
+
 
 import './App.css';
 
@@ -18,7 +20,8 @@ function App() {
       <Routes>
         <Route path="/" element={<LoginSignUp/>} exact></Route>
         <Route path="home" element={<HomePage/>}  ></Route>
-        <Route path="verify" element={<Verify/>}  ></Route>        
+        <Route path="verify" element={<Verify/>}  ></Route>   
+        <Route path="key" element={<CopyKeyToClipboard/>}  ></Route>     
         <Route path="forget" element={<ForgotPassword/>}  ></Route>
         <Route path="otp" element={<ChangePassword/>}  ></Route>
         <Route path="file-upload" element={<FileUpload/>}  ></Route>

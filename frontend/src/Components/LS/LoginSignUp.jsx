@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { useNavigate,Link } from 'react-router-dom';
+import React, { useState} from 'react';
+import { useNavigate } from 'react-router-dom';
 import './LoginSignup.css';
 import Axios from 'axios';
 import user_icon from "../Assets/person.png";
 import email_icon from "../Assets/email.png";
 import password_icon from "../Assets/password.png";
+import { generateKeyPair } from '../MyFunctions';
 //import phone_icon from "../Assets/phone.png";
 
 const LoginSignUp = () => {
@@ -16,20 +17,27 @@ const LoginSignUp = () => {
 
   const handleLoginSignup = async () => {
     try {
+      
       if (action === "Login") {
         const response = await Axios.post('http://localhost:5000/login', {
           email,
-          password,
+          password
         });
         // Handle successful login response
         console.log(response.data);
         navigateTo('/home');
       } else {
-        // If action is "Sign Up"
+        localStorage.setItem('email', email);
+        const {privateKey, publicKey} = generateKeyPair();
+        localStorage.setItem('privateKey', privateKey.toString());
+        const publicX = publicKey.x.toString();
+        const publicY = publicKey.y.toString();
         const response = await Axios.post('http://localhost:5000/signup', {
           name,
           email,
           password,
+          publicX,
+          publicY
         });
         // Handle successful signup response
         console.log(response.data);
@@ -41,22 +49,6 @@ const LoginSignUp = () => {
     }
   };
 
-  // Function to generate a random OTP
-  const generateOTP = () => {
-    return Math.floor(100000 + Math.random() * 900000).toString();
-  };
-
-  // Function to send OTP to the provided email
-  const sendOTP = async (toEmail, otp) => {
-    try {
-      // Make a request to backend to send OTP via email
-      const response = await Axios.post('http://localhost:5000/sendotp', { email: toEmail, otp });
-      console.log(response.data);
-    } catch (error) {
-      console.error('Error sending OTP:', error);
-      throw new Error('Failed to send OTP');
-    }
-  };
 
   return (
     <div className="container">

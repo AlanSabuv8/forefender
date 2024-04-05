@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './FileRetrieve.css';
+import { multiply } from '../MyFunctions';
 
 const ScanEpisodes = () => {
   const [episodes, setEpisodes] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
+  //const [privateKey, setPrivateKey] = useState('');
 
   useEffect(() => {
     const fetchEpisodes = async () => {
@@ -22,25 +24,56 @@ const ScanEpisodes = () => {
     fetchEpisodes();
   }, []);
 
-  const handleDownload = async (key) => {
+  const handleDownload = async (fileId, privateKey) => {
     try {
-      const response = await axios.get(`http://localhost:5000/download/${key}`, { responseType: 'blob' });
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      // Fetch ephemeral public key from server
+      const Kresponse = await axios.get('http://localhost:5000/getEphemeralPublicKey', {
+        params: {
+          fileId: fileId
+        }
+      });
+      const ephemeralPublicKey = {
+        x: BigInt(Kresponse.data.ePublicX),
+        y: BigInt(Kresponse.data.ePublicY)
+      };
+      console.log("pr", privateKey);
+      console.log("eph", ephemeralPublicKey);
+      const sharedKey = multiply(ephemeralPublicKey, BigInt(privateKey));
+      console.log(sharedKey);
+      const keyX = sharedKey.x.toString();
+      const keyY = sharedKey.y.toString();
+      
+
+      // Perform download and store with private key and ephemeral public key
+      const downloadResponse = await axios.post('http://localhost:5000/downloadAndStore', { fileId, keyX, keyY }, {
+        responseType: 'blob' // Specify the response type as blob
+      });
+
+      // Create a URL for the blob response
+      const url = window.URL.createObjectURL(new Blob([downloadResponse.data]));
+
+      // Create a temporary anchor element to trigger the download
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', key);
+      link.setAttribute('download', fileId); // Set the filename for download
       document.body.appendChild(link);
       link.click();
-      link.remove(); // Clean up the dynamically created link
+
+      // Clean up
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(link);
     } catch (error) {
-      console.error('Error downloading file:', error);
+      console.error('Error downloading and storing file:', error);
     }
   };
 
-  const handleConfirmDownload = (fileId, s3Location, fileType) => {
+  const handleConfirmDownload = async (fileId) => {
     const confirmed = window.confirm('Are you sure you want to download this file?');
     if (confirmed) {
-      handleDownload(fileId);
+      const userPrivateKey = prompt('Please enter your private key:');
+      if (userPrivateKey) {
+        await handleDownload(fileId, userPrivateKey);
+      }
     }
   };
 
@@ -69,7 +102,7 @@ const ScanEpisodes = () => {
               <td>{episode.fileId}</td>
               <td>{episode.filetype}</td>
               <td>
-                <button onClick={() => handleConfirmDownload(episode.fileId, episode.s3Location, episode.filetype)}>Download</button>
+                <button onClick={() => handleConfirmDownload(episode.fileId)}>Download</button>
               </td>
             </tr>
           ))}

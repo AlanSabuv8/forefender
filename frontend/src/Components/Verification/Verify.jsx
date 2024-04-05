@@ -1,8 +1,11 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import Axios from "axios";
-function Verify() {
+
+const Verify = () => {
   const [otp, setOtp] = useState('');
+  //const [email, setEmail] = useState('');
+  const navigateTo = useNavigate();
 
   const handleOtpChange = (event) => {
     setOtp(event.target.value);
@@ -10,25 +13,21 @@ function Verify() {
 
   const handleSubmit = async () => {
     // Call your backend API to verify the OTP
+    const email = localStorage.getItem('email');
     try {
-      const response = await fetch('/verifotp', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ otp }),
+      const response = await Axios.post('http://localhost:5000/verifyotp', {
+        otp,
+        email
       });
 
-      const data = await response.json();
-      console.log(data);
-
       // Check if verification was successful
-      if (data.success) {
-        if (data.confirmed) {
+      if (response.data.success) {
+        if (response.data.confirmed) {
           alert('OTP verification successful and email confirmed.');
         } else {
           alert('OTP verification successful but email not confirmed yet.');
         }
+        navigateTo('/key');
         // Redirect to the next page or perform any other action
       } else {
         alert('OTP verification failed. Please try again.');

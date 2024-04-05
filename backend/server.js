@@ -1,4 +1,6 @@
-const {chacha20Crypt, fromHex, uint8ArrayToHex, hexToText} = require('./chacha20.js')
+const {chacha20Crypt, fromHex} = require('./chacha20.js')
+const {eccDecrypt, eccEncrypt} = require('./ecc.js')
+const { PassThrough } = require('stream');
 
 const express = require("express")
 const fs = require("fs");
@@ -47,7 +49,9 @@ async function createTableForUser(email) {
     const params = {
         TableName: tableName,
         KeySchema: [{ AttributeName: 'fileId', KeyType: 'HASH' }],
-        AttributeDefinitions: [{ AttributeName: 'fileId', AttributeType: 'S' }],
+        AttributeDefinitions: [
+            { AttributeName: 'fileId', AttributeType: 'S' }
+        ],
         ProvisionedThroughput: { ReadCapacityUnits: 5, WriteCapacityUnits: 5 }
     };
 
@@ -73,7 +77,94 @@ async function createTableForUser(email) {
     }
 }
 
-app.post("/verifyotp", async (req, res) => {
+
+
+app.post('/signup', async (req, res) => {
+    const { name, email, password, publicX, publicY} = req.body;
+
+    const params = {
+        ClientId: '2po0vi3m62h4gehm0ea1fp7brb',
+        Password: password,
+        Username: email,
+        UserAttributes: [
+        {
+            Name: 'email',
+            Value: email
+        },
+        {
+            Name: 'name',
+            Value: name
+        },
+        {
+            Name: 'custom:pubX',
+            Value: publicX
+        },
+        {
+            Name: 'custom:pubY',
+            Value: publicY
+        }
+        ]
+    };
+
+    try {
+        const data = await cognito.signUp(params).promise();
+        console.log('User signup successful:', data);
+
+        // Send a success response
+        res.json({ success: true, message: 'User signed up successfully' });
+
+        /* Check if the user has already been confirmed
+        const userParams = {
+            UserPoolId: 'us-east-1_QiFJYT6YJ',
+            Username: email
+        };
+
+        const userData = await cognito.adminGetUser(userParams).promise();
+        const userConfirmed = userData.UserStatus === 'CONFIRMED';
+
+        // Send verification code to user's email only if the user has not been confirmed
+        if (!userConfirmed) {
+            const verificationParams = {
+                ClientId: '2po0vi3m62h4gehm0ea1fp7brb',
+                Username: email
+            };
+
+            await cognito.resendConfirmationCode(verificationParams).promise();
+            console.log('Verification code sent to user email:', email);
+        } else {
+            console.log('User email is already confirmed');
+        }*/
+    } catch (error) {
+        console.error('User signup error:', error);
+        // Send an error response
+        res.status(400).json({ success: false, message: error.message });
+    }
+});
+
+app.post('/forgotpassword', async (req, res) => {
+    const { email } = req.body;
+    const params = {
+        ClientId: '2po0vi3m62h4gehm0ea1fp7brb',
+        Username: email,
+    };
+    try {
+        // Initiate the forgot password request
+        await cognito.forgotPassword(params).promise();
+        console.log('Forgot password request initiated successfully');
+        // Send a success response
+        res.json({ success: true, message: 'Password reset request initiated successfully. Please check your email for further instructions.' });
+    } catch (error) {
+        console.error('Forgot password error:', error);
+        if (error.code === 'UserNotFoundException') {
+            res.status(400).json({ success: false, message: 'The provided email address is not registered. Please try again with a valid email address.' });
+        } else {
+            // For other errors, send a generic error message
+            res.status(400).json({ success: false, message: 'Failed to initiate password reset. Please try again later.' });
+        }
+    }
+});
+
+app.post("/verifypassword", async (req, res) => {
     const { email, otp, newPassword } = req.body;
   
     const params = {
@@ -98,84 +189,8 @@ app.post("/verifyotp", async (req, res) => {
       });
     }
   });
- 
-app.post('/signup', async (req, res) => {
-const { name, email, password } = req.body;
 
-const params = {
-    ClientId: '2po0vi3m62h4gehm0ea1fp7brb',
-    Password: password,
-    Username: email,
-    UserAttributes: [
-    {
-        Name: 'email',
-        Value: email
-    },
-    {
-        Name: 'name',
-        Value: name
-    }
-    ]
-};
-
-try {
-    const data = await cognito.signUp(params).promise();
-    console.log('User signup successful:', data);
-
-    // Send a success response
-    res.json({ success: true, message: 'User signed up successfully' });
-
-    // Check if the user has already been confirmed
-    const userParams = {
-        UserPoolId: 'us-east-1_QiFJYT6YJ',
-        Username: email
-    };
-
-    const userData = await cognito.adminGetUser(userParams).promise();
-    const userConfirmed = userData.UserStatus === 'CONFIRMED';
-
-    // Send verification code to user's email only if the user has not been confirmed
-    if (!userConfirmed) {
-        const verificationParams = {
-            ClientId: '2po0vi3m62h4gehm0ea1fp7brb',
-            Username: email
-        };
-
-        await cognito.resendConfirmationCode(verificationParams).promise();
-        console.log('Verification code sent to user email:', email);
-    } else {
-        console.log('User email is already confirmed');
-    }
-} catch (error) {
-    console.error('User signup error:', error);
-    // Send an error response
-    res.status(400).json({ success: false, message: error.message });
-}
-});
-app.post('/forgotpassword', async (req, res) => {
-    const { email } = req.body;
-    const params = {
-        ClientId: '2po0vi3m62h4gehm0ea1fp7brb',
-        Username: email,
-    };
-    try {
-        // Initiate the forgot password request
-        await cognito.forgotPassword(params).promise();
-        console.log('Forgot password request initiated successfully');
-        // Send a success response
-        res.json({ success: true, message: 'Password reset request initiated successfully. Please check your email for further instructions.' });
-    } catch (error) {
-        console.error('Forgot password error:', error);
-        if (error.code === 'UserNotFoundException') {
-            res.status(400).json({ success: false, message: 'The provided email address is not registered. Please try again with a valid email address.' });
-        } else {
-            // For other errors, send a generic error message
-            res.status(400).json({ success: false, message: 'Failed to initiate password reset. Please try again later.' });
-        }
-    }
-});
-
-app.post("/verifotp", async (req, res) => {
+app.post("/verifyotp", async (req, res) => {
     const { otp, email } = req.body; // Extract email from the request body
     const params = {
         ClientId: '2po0vi3m62h4gehm0ea1fp7brb',
@@ -188,20 +203,20 @@ app.post("/verifotp", async (req, res) => {
         const data = await cognito.confirmSignUp(params).promise();
         console.log("Email verification successful:", data);
 
-        // Check confirmation status after OTP verification
+        /* Check confirmation status after OTP verification
         const userParams = {
             UserPoolId: 'us-east-1_QiFJYT6YJ',
             Username: email
         };
 
         const userData = await cognito.adminGetUser(userParams).promise();
-        const userConfirmed = userData.UserStatus === 'CONFIRMED';
+        const userConfirmed = userData.UserStatus === 'CONFIRMED';*/
 
         // Send response based on confirmation status
         res.status(200).json({
             success: true,
             message: "OTP verification successful",
-            confirmed: userConfirmed
+            confirmed: 'CONFIRMED'
         });
     } catch (error) {
         console.error("OTP verification error:", error);
@@ -274,16 +289,35 @@ function writeUint8ArrayToFile(uint8Array, filePath) {
     }
 }
 
-app.post('/upload', upload.single('file'), (req, res) => {
-    console.log(req.body);
-    console.log(req.file);
+app.post('/upload', upload.single('file'), async (req, res) => {
+    // Fetch the user's attributes from Amazon Cognito
+    let pubX, pubY;
+    try {
+        const userData = await cognito.adminGetUser({
+            UserPoolId: 'us-east-1_QiFJYT6YJ',
+            Username: currentUserEmail
+        }).promise();
+
+        // Extract pubX and pubY attributes from user data
+        pubX = userData.UserAttributes.find(attr => attr.Name === 'custom:pubX')?.Value;
+        pubY = userData.UserAttributes.find(attr => attr.Name === 'custom:pubY')?.Value;
+    } catch (error) {
+        console.error('Error fetching user attributes from Cognito:', error);
+        return res.status(500).send('Error fetching user attributes from Cognito');
+    }
+    console.log("obtained", pubX, pubY);
+    const publicKey = {
+        x: BigInt(pubX),
+        y: BigInt(pubY)
+    };
+
     const rkey = crypto.randomBytes(32).toString('hex');
     const rnonce = crypto.randomBytes(12).toString('hex');
     console.log(rkey);
     console.log(rnonce);
     const key = fromHex(rkey);
     const nonce = fromHex(rnonce);
-
+    const { ephemeralPublicKey, ciphertext } = eccEncrypt(rkey, publicKey);
     // Read file as Uint8Array
     const fileData = readFileAsUint8Array(req.file.path);
     if (!fileData) {
@@ -326,7 +360,11 @@ app.post('/upload', upload.single('file'), (req, res) => {
             Item: {
                 fileId: req.file.originalname,
                 s3Location: s3Data.Location,
-                filetype: req.file.mimetype
+                filetype: req.file.mimetype,
+                Cnonce: rnonce,
+                Ckey: ciphertext.toString(),
+                ePublicX: ephemeralPublicKey.x.toString(),
+                ePublicY: ephemeralPublicKey.y.toString()
                 // Add more attributes as needed
             }
         };
@@ -382,33 +420,98 @@ app.get("/scanEpisodes", async (req, res) => {
         res.status(500).json({ success: false, message: "Failed to scan episodes table" });
     }
 });
-// Endpoint to handle file download
-app.get('/download/:key', (req, res) => {
-    const key = req.params.key; // File key in S3 bucket
-    const params = {
-      Bucket: 'amplify-forefender-dev-20309-deployment',
-      Key: key,
-    };
-  
-    s3.getObject(params, (err, data) => {
-      if (err) {
-        console.error('Error downloading file from S3:', err);
-        return res.status(500).send('Error downloading file from S3');
-      }
-  
-      res.setHeader('Content-Disposition', `attachment; filename=${key}`);
-      res.setHeader('Content-Type', data.ContentType);
-      res.send(data.Body);
-    });
-  });
-    /*try {
-        // Retrieve data from DynamoDB based on the logged-in user's email
-        const tableName = currentUserEmail.replace(/[^a-zA-Z0-9]/g, "_");
-        const params = {
-            TableName: tableName
-        };*/
 
-       
+app.get('/getEphemeralPublicKey', async (req, res) => {
+    const fileId  = req.query.fileId;
+    const dynamoParams = {
+        TableName: currentUserEmail?.replace(/[^a-zA-Z0-9]/g, "_"),
+        Key: { fileId: fileId }
+    };
+    console.log("par: ", dynamoParams);
+    try {
+        const dynamoData = await docClient.get(dynamoParams).promise();
+        console.log("item: ", dynamoData.Item);
+        // Check if data was retrieved successfully
+        if (!dynamoData.Item) {
+            return res.status(404).send('File metadata not found in DynamoDB');
+        }
+
+        const { ePublicX, ePublicY } = dynamoData.Item;
+        
+        res.json({ ePublicX, ePublicY});
+    }
+    catch(error) {
+        console.error('Error fetching ephemeral key:', error);
+        res.status(500).send('Error ephemeral key retrieval');
+    }
+  });
+
+// Endpoint to handle file download
+app.post('/downloadAndStore', async (req, res) => {
+    const { fileId, keyX, keyY } = req.body; // Extract fileId from request body
+
+    // Construct the S3 download parameters
+    const params = {
+        Bucket: 'amplify-forefender-dev-20309-deployment',
+        Key: fileId,
+    };
+
+    try {
+        // Download file from S3
+        const data = await s3.getObject(params).promise();
+        //console.log("content: ", data.Body);
+
+        // Retrieve nonce and key from DynamoDB based on fileId
+        const dynamoParams = {
+            TableName: currentUserEmail?.replace(/[^a-zA-Z0-9]/g, "_"), // Optional chaining used here
+            Key: { fileId: fileId }
+        };
+
+        const dynamoData = await docClient.get(dynamoParams).promise();
+
+        // Check if data was retrieved successfully
+        if (!dynamoData.Item) {
+            return res.status(404).send('File metadata not found in DynamoDB');
+        }
+
+        const { Ckey, Cnonce } = dynamoData.Item;
+        const cipherKey = BigInt(Ckey);
+        const sharedSecret = {
+            x: BigInt(keyX),
+            y: BigInt(keyY)
+        }
+        const key = eccDecrypt(cipherKey, sharedSecret )
+        // Decrypt the file data using ChaCha20
+        const decryptedData = chacha20Crypt(data.Body, fromHex(key), fromHex(Cnonce));
+
+        /* Save the decrypted file using Multer
+        const decryptedFilePath = `public/decrypt/${fileId}`;
+        fs.writeFileSync(decryptedFilePath, decryptedData);
+
+        res.status(200).json({
+            message: 'File downloaded, decrypted, and stored successfully',
+            fileId: fileId,
+            decryptedFilePath: decryptedFilePath
+        });*/
+        res.set({
+            'Content-Type': 'application/octet-stream',
+            'Content-Disposition': `attachment; filename=${fileId}`, // Specify the filename for download
+            'Content-Length': decryptedData.length
+        });
+
+        // Create a stream from the decrypted data
+        const stream = new PassThrough();
+        stream.end(decryptedData);
+
+        // Pipe the stream to the response
+        stream.pipe(res);
+
+    } catch (error) {
+        console.error('Error downloading and storing file:', error);
+        res.status(500).send('Error downloading and storing file');
+    }
+});
+  
 
 
 app.listen(5000, () => {console.log("Server started on port 5000")})

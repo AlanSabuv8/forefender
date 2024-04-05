@@ -15,7 +15,7 @@ const ChangePassword = () => {
 
     try {
       const email = sessionStorage.getItem("mail");
-      const response = await Axios.post("http://localhost:5000/verifyotp", {
+      const response = await Axios.post("http://localhost:5000/verifypassword", {
         email,
         otp,
         newPassword,
