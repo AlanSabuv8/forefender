@@ -511,7 +511,36 @@ app.post('/downloadAndStore', async (req, res) => {
         res.status(500).send('Error downloading and storing file');
     }
 });
+app.post('/deleteFile', async (req, res) => {
+    const { fileId } = req.body;
   
+    try {/*
+      //Delete file from S3 bucket
+      const s3Params = {
+        Bucket: 'amplify-forefender-dev-20309-deployment',
+        Key: fileId,
+      };
+      await s3.deleteObject(s3Params).promise();
+    */
+      // Delete file metadata from DynamoDB
+      const dynamoParams = {
+        TableName: currentUserEmail.replace(/[^a-zA-Z0-9]/g, "_"),
+        Key: { fileId: fileId },
+      };
+      await docClient.delete(dynamoParams).promise();
+
+      const s3Params = {
+        Bucket: 'amplify-forefender-dev-20309-deployment',
+        Key: fileId,
+      };
+      await s3.deleteObject(s3Params).promise();
+  
+      res.status(200).json({ message: 'File deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting file:', error);
+      res.status(500).send('Error deleting file');
+    }
+          });
 
 
 app.listen(5000, () => {console.log("Server started on port 5000")})

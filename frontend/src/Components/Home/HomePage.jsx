@@ -16,7 +16,15 @@ const HomePage = () => {
     
     navigateTo('/file-retrieve');
   };
-
+  const handleSignOut = () => {
+    // Clear the token from localStorage upon sign out
+    localStorage.removeItem('authToken'); // Assuming you store the token as 'authToken'
+    setToken(null); // Reset the token in the parent component
+      
+      // After clearing the token, navigate to the login page
+      navigateTo('/');
+    };
+  
 
   return (
     <div className="home-page">
@@ -28,6 +36,10 @@ const HomePage = () => {
         <button className='file-retrieval' onClick={() => {handleRetrieve()}}>
           File Retrieval
         </button>
+        <button className='sign-out' onClick={handleSignOut}>
+          Sign Out
+        </button>
+
       </div>
     </div>
   );

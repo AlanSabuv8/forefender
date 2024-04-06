@@ -66,7 +66,18 @@ const ScanEpisodes = () => {
       console.error('Error downloading and storing file:', error);
     }
   };
-
+  const handleDelete = async (fileId) => {
+    try {
+      const response = await axios.post('http://localhost:5000/deleteFile', { fileId });
+      console.log('File deleted:', response.data);
+      // Assuming you want to update the UI after deletion, you can refetch the episodes
+      const updatedEpisodes = episodes.filter((episode) => episode.fileId !== fileId);
+      setEpisodes(updatedEpisodes);
+    } catch (error) {
+      console.error('Error deleting file:', error);
+    }
+  };
+  
   const handleConfirmDownload = async (fileId) => {
     const confirmed = window.confirm('Are you sure you want to download this file?');
     if (confirmed) {
@@ -76,6 +87,13 @@ const ScanEpisodes = () => {
       }
     }
   };
+  const handleConfirmDelete = (fileId) => {
+    const confirmed = window.confirm('Are you sure you want to delete this file?');
+    if (confirmed) {
+      handleDelete(fileId);
+    }
+  };
+
 
   if (loading) {
     return <div className="loading">Loading...</div>;
@@ -103,6 +121,7 @@ const ScanEpisodes = () => {
               <td>{episode.filetype}</td>
               <td>
                 <button onClick={() => handleConfirmDownload(episode.fileId)}>Download</button>
+                <button onClick={() => handleConfirmDelete(episode.fileId)}>Delete</button> 
               </td>
             </tr>
           ))}
