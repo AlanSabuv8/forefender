@@ -13,7 +13,7 @@ const ForgotPassword = () => {
     try {
       // Make an HTTP POST request to your backend endpoint
       sessionStorage.setItem('mail', email);
-      const response = await Axios.post('http://localhost:5000/forgotpassword', { email });
+      const response = await Axios.post('https://localhost:443/forgotpassword', { email });
       console.log(response.data);
       setSuccess(true);
       navgateTo("/"); // Set success to true upon successful request

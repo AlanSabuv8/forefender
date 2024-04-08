@@ -3,13 +3,14 @@ const {eccDecrypt, eccEncrypt} = require('./ecc.js')
 const { PassThrough } = require('stream');
 
 const express = require("express")
+const https = require('https');
 const fs = require("fs");
 const cors = require("cors")
 const multer = require('multer')
 const bodyParser = require('body-parser');
 const AWS = require('aws-sdk');
 require('dotenv').config();
-//const path = require('path')
+const path = require('path')
 const crypto = require('crypto');
 //import { Auth } from 'aws-amplify';
 
@@ -17,13 +18,24 @@ const crypto = require('crypto');
 const app = express()
 app.use(bodyParser.json());
 
+// SSL/TLS certificates
+const options = {
+    key: fs.readFileSync(path.join(__dirname, 'ssl', 'Local.key')),
+    cert: fs.readFileSync(path.join(__dirname, 'ssl', 'Local.crt'))
+};
+
+
 
 // Configure AWS SDK
 AWS.config.update({
     accessKeyId: 'AKIASICVM7JBMRCV35AP',
     secretAccessKey: '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',
     region: 'us-east-1'
-  });
+});
+
+AWS.config.update({
+    logger: console
+});
   
   // Create S3 instance
 const s3 = new AWS.S3();
@@ -203,14 +215,7 @@ app.post("/verifyotp", async (req, res) => {
         const data = await cognito.confirmSignUp(params).promise();
         console.log("Email verification successful:", data);
 
-        /* Check confirmation status after OTP verification
-        const userParams = {
-            UserPoolId: 'us-east-1_QiFJYT6YJ',
-            Username: email
-        };
-
-        const userData = await cognito.adminGetUser(userParams).promise();
-        const userConfirmed = userData.UserStatus === 'CONFIRMED';*/
+        
 
         // Send response based on confirmation status
         res.status(200).json({
@@ -305,7 +310,7 @@ app.post('/upload', upload.single('file'), async (req, res) => {
         console.error('Error fetching user attributes from Cognito:', error);
         return res.status(500).send('Error fetching user attributes from Cognito');
     }
-    console.log("obtained", pubX, pubY);
+
     const publicKey = {
         x: BigInt(pubX),
         y: BigInt(pubY)
@@ -313,73 +318,87 @@ app.post('/upload', upload.single('file'), async (req, res) => {
 
     const rkey = crypto.randomBytes(32).toString('hex');
     const rnonce = crypto.randomBytes(12).toString('hex');
-    console.log(rkey);
-    console.log(rnonce);
     const key = fromHex(rkey);
     const nonce = fromHex(rnonce);
-    const { ephemeralPublicKey, ciphertext } = eccEncrypt(rkey, publicKey);
+    
     // Read file as Uint8Array
     const fileData = readFileAsUint8Array(req.file.path);
     if (!fileData) {
         return res.status(500).send("Error reading uploaded file");
     }
+    // Create promises for eccEncrypt and chacha20Crypt
+    const eccEncryptPromise = eccEncrypt(rkey, publicKey);
+    const chacha20CryptPromise = chacha20Crypt(fileData, key, nonce);
 
-    // Encrypt the file data
-    const encryptedData = chacha20Crypt(fileData, key, nonce);
+    try {
+        // Run both promises in parallel
+        const [eccEncryptResult, encryptedData] = await Promise.all([
+            eccEncryptPromise,
+            chacha20CryptPromise
+        ]);
 
-    // Write encrypted data to temporary file
-    writeUint8ArrayToFile(encryptedData, req.file.path);
-    //awsData = hexToText(uint8ArrayToHex(encryptedData));
+        console.log("Encryption complete...");
 
-    const params = {
-        Bucket: 'amplify-forefender-dev-20309-deployment',
-        Key: req.file.originalname,
-        Body: encryptedData // Upload the encrypted data
-    };
+        const { ephemeralPublicKey, ciphertext } = eccEncryptResult;
 
-    // Upload encrypted file to S3
-    s3.upload(params, (s3Err, s3Data) => {
-        if (s3Err) {
-            console.error(s3Err);
-            return res.status(500).send("Error uploading encrypted file to S3");
-        }
 
-        console.log('Encrypted file uploaded to S3:', s3Data.Location);
+        // Write encrypted data to temporary file
+        writeUint8ArrayToFile(encryptedData, req.file.path);
+        //awsData = hexToText(uint8ArrayToHex(encryptedData));
 
-        // Delete the temporary file after processing
-        fs.unlink(req.file.path, (unlinkErr) => {
-            if (unlinkErr) {
-                console.error("Error deleting local file:", unlinkErr);
-            }
-            console.log('Local file deleted successfully.');
-        });
-
-        // Store S3 data information in DynamoDB
-        const dynamoDBParams = {
-            TableName: currentUserEmail.replace(/[^a-zA-Z0-9]/g, "_"),
-            Item: {
-                fileId: req.file.originalname,
-                s3Location: s3Data.Location,
-                filetype: req.file.mimetype,
-                Cnonce: rnonce,
-                Ckey: ciphertext.toString(),
-                ePublicX: ephemeralPublicKey.x.toString(),
-                ePublicY: ephemeralPublicKey.y.toString()
-                // Add more attributes as needed
-            }
+        const params = {
+            Bucket: 'amplify-forefender-dev-20309-deployment',
+            Key: req.file.originalname,
+            Body: encryptedData // Upload the encrypted data
         };
 
-        docClient.put(dynamoDBParams, (dynamoErr, dynamoData) => {
-            if (dynamoErr) {
-                console.error(dynamoErr);
-                return res.status(500).send("Error storing S3 data information in DynamoDB");
+        // Upload encrypted file to S3
+        s3.upload(params, (s3Err, s3Data) => {
+            if (s3Err) {
+                console.error(s3Err);
+                return res.status(500).send("Error uploading encrypted file to S3");
             }
 
-            console.log('S3 data information stored in DynamoDB:', dynamoData);
-            // Send a response indicating success
-            res.status(200).send("Encrypted file uploaded to S3 and data information stored in DynamoDB successfully");
-        });
-    });
+            console.log('Encrypted file uploaded to S3:', s3Data.Location);
+
+            // Delete the temporary file after processing
+            fs.unlink(req.file.path, (unlinkErr) => {
+                if (unlinkErr) {
+                    console.error("Error deleting local file:", unlinkErr);
+                }
+                console.log('Local file deleted successfully.');
+            });
+
+            // Store S3 data information in DynamoDB
+            const dynamoDBParams = {
+                TableName: currentUserEmail.replace(/[^a-zA-Z0-9]/g, "_"),
+                Item: {
+                    fileId: req.file.originalname,
+                    s3Location: s3Data.Location,
+                    filetype: req.file.mimetype,
+                    Cnonce: rnonce,
+                    Ckey: ciphertext.toString(),
+                    ePublicX: ephemeralPublicKey.x.toString(),
+                    ePublicY: ephemeralPublicKey.y.toString()
+                    // Add more attributes as needed
+                }
+            };
+
+            docClient.put(dynamoDBParams, (dynamoErr, dynamoData) => {
+                if (dynamoErr) {
+                    console.error(dynamoErr);
+                    return res.status(500).send("Error storing S3 data information in DynamoDB");
+                }
+
+                console.log('S3 data information stored in DynamoDB:', dynamoData);
+                // Send a response indicating success
+                res.status(200).send("Encrypted file uploaded to S3 and data information stored in DynamoDB successfully");
+            });
+         });
+    } catch (error) {
+        console.error('Error during encryption:', error);
+        res.status(500).send('Error during encryption');
+    }
 });
 
 // Function to perform DynamoDB scan operation
@@ -484,15 +503,6 @@ app.post('/downloadAndStore', async (req, res) => {
         // Decrypt the file data using ChaCha20
         const decryptedData = chacha20Crypt(data.Body, fromHex(key), fromHex(Cnonce));
 
-        /* Save the decrypted file using Multer
-        const decryptedFilePath = `public/decrypt/${fileId}`;
-        fs.writeFileSync(decryptedFilePath, decryptedData);
-
-        res.status(200).json({
-            message: 'File downloaded, decrypted, and stored successfully',
-            fileId: fileId,
-            decryptedFilePath: decryptedFilePath
-        });*/
         res.set({
             'Content-Type': 'application/octet-stream',
             'Content-Disposition': `attachment; filename=${fileId}`, // Specify the filename for download
@@ -511,6 +521,7 @@ app.post('/downloadAndStore', async (req, res) => {
         res.status(500).send('Error downloading and storing file');
     }
 });
+
 app.post('/deleteFile', async (req, res) => {
     const { fileId } = req.body;
   
@@ -543,4 +554,6 @@ app.post('/deleteFile', async (req, res) => {
           });
 
 
-app.listen(5000, () => {console.log("Server started on port 5000")})
+https.createServer(options, app).listen(443, () => {
+    console.log('HTTPS server running on port 443');
+});

@@ -15,7 +15,7 @@ const Verify = () => {
     // Call your backend API to verify the OTP
     const email = localStorage.getItem('email');
     try {
-      const response = await Axios.post('http://localhost:5000/verifyotp', {
+      const response = await Axios.post('https://localhost:443/verifyotp', {
         otp,
         email
       });

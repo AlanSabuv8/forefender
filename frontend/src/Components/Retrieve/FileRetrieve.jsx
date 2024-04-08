@@ -12,7 +12,7 @@ const ScanEpisodes = () => {
   useEffect(() => {
     const fetchEpisodes = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/scanEpisodes');
+        const response = await axios.get('https://localhost:443/scanEpisodes');
         setEpisodes(response.data);
         setLoading(false);
       } catch (error) {
@@ -27,7 +27,7 @@ const ScanEpisodes = () => {
   const handleDownload = async (fileId, privateKey) => {
     try {
       // Fetch ephemeral public key from server
-      const Kresponse = await axios.get('http://localhost:5000/getEphemeralPublicKey', {
+      const Kresponse = await axios.get('https://localhost:443/getEphemeralPublicKey', {
         params: {
           fileId: fileId
         }
@@ -45,7 +45,7 @@ const ScanEpisodes = () => {
       
 
       // Perform download and store with private key and ephemeral public key
-      const downloadResponse = await axios.post('http://localhost:5000/downloadAndStore', { fileId, keyX, keyY }, {
+      const downloadResponse = await axios.post('https://localhost:443/downloadAndStore', { fileId, keyX, keyY }, {
         responseType: 'blob' // Specify the response type as blob
       });
 
@@ -68,7 +68,7 @@ const ScanEpisodes = () => {
   };
   const handleDelete = async (fileId) => {
     try {
-      const response = await axios.post('http://localhost:5000/deleteFile', { fileId });
+      const response = await axios.post('https://localhost:443/deleteFile', { fileId });
       console.log('File deleted:', response.data);
       // Assuming you want to update the UI after deletion, you can refetch the episodes
       const updatedEpisodes = episodes.filter((episode) => episode.fileId !== fileId);

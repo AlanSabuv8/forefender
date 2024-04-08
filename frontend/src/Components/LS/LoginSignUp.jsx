@@ -19,7 +19,7 @@ const LoginSignUp = () => {
     try {
       
       if (action === "Login") {
-        const response = await Axios.post('http://localhost:5000/login', {
+        const response = await Axios.post('https://localhost:443/login', {
           email,
           password
         });
@@ -32,7 +32,7 @@ const LoginSignUp = () => {
         localStorage.setItem('privateKey', privateKey.toString());
         const publicX = publicKey.x.toString();
         const publicY = publicKey.y.toString();
-        const response = await Axios.post('http://localhost:5000/signup', {
+        const response = await Axios.post('https://localhost:443/signup', {
           name,
           email,
           password,

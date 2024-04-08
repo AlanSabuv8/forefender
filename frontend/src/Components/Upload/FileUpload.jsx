@@ -34,7 +34,7 @@ const FileUpload = ({ onFileSelect }) => {
     setLoading(true);
     const formData = new FormData();
     formData.append('file', file);
-    axios.post('http://localhost:5000/upload', formData)
+    axios.post('https://localhost:443/upload', formData)
       .then(res => {
         setLoading(false);
         navigateTo('/home');
