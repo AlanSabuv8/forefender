@@ -28,8 +28,8 @@ const options = {
 
 // Configure AWS SDK
 AWS.config.update({
-    accessKeyId: 'AKIASICVM7JBMRCV35AP',
-    secretAccessKey: '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',
+    accessKeyId: 'secret_key',
+    secretAccessKey: 'secret_key',
     region: 'us-east-1'
 });
 
@@ -95,7 +95,7 @@ app.post('/signup', async (req, res) => {
     const { name, email, password, publicX, publicY} = req.body;
 
     const params = {
-        ClientId: '2po0vi3m62h4gehm0ea1fp7brb',
+        ClientId: 'client_id',
         Password: password,
         Username: email,
         UserAttributes: [
@@ -180,7 +180,7 @@ app.post("/verifypassword", async (req, res) => {
     const { email, otp, newPassword } = req.body;
   
     const params = {
-      ClientId: "2po0vi3m62h4gehm0ea1fp7brb",
+      ClientId: "client_id",
       ConfirmationCode: otp,
       Username: email,
       Password: newPassword,
@@ -205,7 +205,7 @@ app.post("/verifypassword", async (req, res) => {
 app.post("/verifyotp", async (req, res) => {
     const { otp, email } = req.body; // Extract email from the request body
     const params = {
-        ClientId: '2po0vi3m62h4gehm0ea1fp7brb',
+        ClientId: 'client_id',
         ConfirmationCode: otp,
         Username: email, // Use the provided email instead of a hard-coded value
     };
