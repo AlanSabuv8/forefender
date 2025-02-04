@@ -125,27 +125,7 @@ app.post('/signup', async (req, res) => {
         // Send a success response
         res.json({ success: true, message: 'User signed up successfully' });
 
-        /* Check if the user has already been confirmed
-        const userParams = {
-            UserPoolId: 'us-east-1_QiFJYT6YJ',
-            Username: email
-        };
-
-        const userData = await cognito.adminGetUser(userParams).promise();
-        const userConfirmed = userData.UserStatus === 'CONFIRMED';
-
-        // Send verification code to user's email only if the user has not been confirmed
-        if (!userConfirmed) {
-            const verificationParams = {
-                ClientId: '2po0vi3m62h4gehm0ea1fp7brb',
-                Username: email
-            };
-
-            await cognito.resendConfirmationCode(verificationParams).promise();
-            console.log('Verification code sent to user email:', email);
-        } else {
-            console.log('User email is already confirmed');
-        }*/
+        
     } catch (error) {
         console.error('User signup error:', error);
         // Send an error response
@@ -156,7 +136,7 @@ app.post('/signup', async (req, res) => {
 app.post('/forgotpassword', async (req, res) => {
     const { email } = req.body;
     const params = {
-        ClientId: '2po0vi3m62h4gehm0ea1fp7brb',
+        ClientId: 'client_idb',
         Username: email,
     };
     try {
@@ -242,7 +222,7 @@ const { email, password } = req.body;
 
 const params = {
     AuthFlow: 'USER_PASSWORD_AUTH',
-    ClientId: '2po0vi3m62h4gehm0ea1fp7brb',
+    ClientId: 'client_id',
     AuthParameters: {
     USERNAME: email,
     PASSWORD: password
@@ -525,15 +505,7 @@ app.post('/downloadAndStore', async (req, res) => {
 app.post('/deleteFile', async (req, res) => {
     const { fileId } = req.body;
   
-    try {/*
-      //Delete file from S3 bucket
-      const s3Params = {
-        Bucket: 'amplify-forefender-dev-20309-deployment',
-        Key: fileId,
-      };
-      await s3.deleteObject(s3Params).promise();
-    */
-      // Delete file metadata from DynamoDB
+    try {
       const dynamoParams = {
         TableName: currentUserEmail.replace(/[^a-zA-Z0-9]/g, "_"),
         Key: { fileId: fileId },
